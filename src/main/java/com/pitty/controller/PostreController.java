@@ -1,7 +1,9 @@
 package com.pitty.controller;
 
-import com.pitty.domain.Postre;
-import com.pitty.repository.PostreRepository;
+import com.pitty.dto.PostreReadDTO;
+import com.pitty.dto.PostreWriteDTO;
+import com.pitty.service.PostreService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -12,22 +14,27 @@ import java.util.List;
 @RequestMapping("/api/postres")
 public class PostreController {
 
-  private final PostreRepository repo;
+  private final PostreService service;
 
-  public PostreController(PostreRepository repo) { this.repo = repo; }
+  public PostreController(PostreService service) {
+    this.service = service;
+  }
 
   @GetMapping
-  public List<Postre> all() { return repo.findAll(); }
+  public List<PostreReadDTO> all() {
+    return service.findAll();
+  }
 
   @GetMapping("/{id}")
-  public ResponseEntity<Postre> one(@PathVariable Long id) {
-    return repo.findById(id).map(ResponseEntity::ok)
+  public ResponseEntity<PostreReadDTO> one(@PathVariable Long id) {
+    return service.findById(id)
+        .map(ResponseEntity::ok)
         .orElseGet(() -> ResponseEntity.notFound().build());
   }
 
   @PostMapping
-  public ResponseEntity<Postre> create(@RequestBody Postre body) {
-    var saved = repo.save(body);
+  public ResponseEntity<PostreReadDTO> create(@Valid @RequestBody PostreWriteDTO body) {
+    var saved = service.create(body);
     return ResponseEntity.created(URI.create("/api/postres/" + saved.getId())).body(saved);
   }
 }
