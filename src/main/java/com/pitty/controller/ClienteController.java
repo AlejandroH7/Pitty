@@ -1,7 +1,7 @@
 package com.pitty.controller;
 
 import com.pitty.domain.Cliente;
-import com.pitty.repository.ClienteRepository;
+import com.pitty.service.ClienteService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,44 +13,40 @@ import java.util.List;
 @RequestMapping("/api/clientes")
 public class ClienteController {
 
-  private final ClienteRepository repo;
+  private final ClienteService service;
 
-  public ClienteController(ClienteRepository repo) {
-    this.repo = repo;
+  public ClienteController(ClienteService service) {
+    this.service = service;
   }
 
   @GetMapping
   public List<Cliente> findAll() {
-    return repo.findAll();
+    return service.findAll();
   }
 
   @GetMapping("/{id}")
   public ResponseEntity<Cliente> findOne(@PathVariable Long id) {
-    return repo.findById(id).map(ResponseEntity::ok)
+    return service.findById(id).map(ResponseEntity::ok)
         .orElseGet(() -> ResponseEntity.notFound().build());
   }
 
   @PostMapping
   public ResponseEntity<Cliente> create(@Valid @RequestBody Cliente body) {
-    var saved = repo.save(body);
+    var saved = service.create(body);
     return ResponseEntity.created(URI.create("/api/clientes/" + saved.getId())).body(saved);
   }
 
   @PutMapping("/{id}")
   public ResponseEntity<Cliente> update(@PathVariable Long id, @Valid @RequestBody Cliente body) {
-    return repo.findById(id).map(existing -> {
-      existing.setNombre(body.getNombre());
-      existing.setTelefono(body.getTelefono());
-      existing.setNotas(body.getNotas());
-      existing.setUpdatedBy(body.getUpdatedBy());
-      return ResponseEntity.ok(repo.save(existing));
-    }).orElseGet(() -> ResponseEntity.notFound().build());
+    return service
+        .update(id, body)
+        .map(ResponseEntity::ok)
+        .orElseGet(() -> ResponseEntity.notFound().build());
   }
 
   @DeleteMapping("/{id}")
   public ResponseEntity<Void> delete(@PathVariable Long id) {
-    if (!repo.existsById(id)) return ResponseEntity.notFound().build();
-    repo.deleteById(id);
+    if (!service.delete(id)) return ResponseEntity.notFound().build();
     return ResponseEntity.noContent().build();
   }
 }

@@ -1,13 +1,11 @@
 package com.pitty.controller;
 
-import com.pitty.domain.*;
+import com.pitty.domain.Pedido;
 import com.pitty.dto.PedidoCreateDTO;
-import com.pitty.dto.PedidoItemCreateDTO;
-import com.pitty.repository.*;
+import com.pitty.service.PedidoService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
 import java.net.URI;
 import java.util.List;
 
@@ -15,75 +13,33 @@ import java.util.List;
 @RequestMapping("/api/pedidos")
 public class PedidoController {
 
-  private final PedidoRepository pedidoRepo;
-  private final PedidoItemRepository itemRepo;
-  private final ClienteRepository clienteRepo;
-  private final PostreRepository postreRepo;
+  private final PedidoService service;
 
-  public PedidoController(PedidoRepository pedidoRepo,
-                          PedidoItemRepository itemRepo,
-                          ClienteRepository clienteRepo,
-                          PostreRepository postreRepo) {
-    this.pedidoRepo = pedidoRepo;
-    this.itemRepo = itemRepo;
-    this.clienteRepo = clienteRepo;
-    this.postreRepo = postreRepo;
+  public PedidoController(PedidoService service) {
+    this.service = service;
   }
 
   @GetMapping
   public List<Pedido> findAll() {
-    return pedidoRepo.findAll();
+    return service.findAll();
   }
 
   @GetMapping("/{id}")
   public ResponseEntity<Pedido> findOne(@PathVariable Long id) {
-    return pedidoRepo.findById(id)
+    return service
+        .findById(id)
         .map(ResponseEntity::ok)
         .orElseGet(() -> ResponseEntity.notFound().build());
   }
 
   @PostMapping
   public ResponseEntity<Pedido> create(@RequestBody PedidoCreateDTO dto) {
-    var cliente = (dto.getClienteId() != null)
-        ? clienteRepo.findById(dto.getClienteId()).orElse(null) : null;
-    if (cliente == null) {
+    try {
+      var pedido = service.create(dto);
+      return ResponseEntity.created(URI.create("/api/pedidos/" + pedido.getId()))
+          .body(pedido);
+    } catch (IllegalArgumentException ex) {
       return ResponseEntity.badRequest().build();
     }
-
-    var pedido = new Pedido();
-    pedido.setCliente(cliente);
-    pedido.setFechaEntrega(dto.getFechaEntrega());
-    pedido.setEstado(Pedido.Estado.BORRADOR);
-    pedido.setNotas(dto.getNotas());
-    pedido.setTotal(BigDecimal.ZERO);
-    pedido = pedidoRepo.save(pedido);
-
-    BigDecimal total = BigDecimal.ZERO;
-    if (dto.getItems() != null) {
-      for (PedidoItemCreateDTO it : dto.getItems()) {
-        var postre = (it.getPostreId() != null)
-            ? postreRepo.findById(it.getPostreId()).orElse(null) : null;
-        if (postre == null) continue;
-
-        var item = new PedidoItem();
-        item.setPedido(pedido);
-        item.setPostre(postre);
-        item.setCantidad(it.getCantidad());
-        item.setPrecioUnitario(it.getPrecioUnitario());
-        var subtotal = it.getPrecioUnitario()
-            .multiply(new BigDecimal(it.getCantidad()));
-        item.setSubtotal(subtotal);
-        item.setPersonalizaciones(it.getPersonalizaciones());
-        itemRepo.save(item);
-
-        total = total.add(subtotal);
-      }
-    }
-
-    pedido.setTotal(total);
-    pedido = pedidoRepo.save(pedido);
-
-    return ResponseEntity.created(URI.create("/api/pedidos/" + pedido.getId()))
-        .body(pedido);
   }
 }
