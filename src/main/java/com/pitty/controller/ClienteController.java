@@ -1,7 +1,8 @@
 package com.pitty.controller;
 
-import com.pitty.domain.Cliente;
-import com.pitty.repository.ClienteRepository;
+import com.pitty.dto.ClienteRequestDTO;
+import com.pitty.dto.ClienteResponseDTO;
+import com.pitty.service.ClienteService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,45 +14,33 @@ import java.util.List;
 @RequestMapping("/api/clientes")
 public class ClienteController {
 
-  private final ClienteRepository repo;
+    private final ClienteService clienteService;
+    public ClienteController(ClienteService clienteService) { this.clienteService = clienteService; }
 
-  public ClienteController(ClienteRepository repo) {
-    this.repo = repo;
-  }
+    @PostMapping
+    public ResponseEntity<ClienteResponseDTO> crear(@Valid @RequestBody ClienteRequestDTO dto) {
+        ClienteResponseDTO created = clienteService.crear(dto);
+        return ResponseEntity.created(URI.create("/api/clientes/" + created.getId())).body(created);
+    }
 
-  @GetMapping
-  public List<Cliente> findAll() {
-    return repo.findAll();
-  }
+    @GetMapping
+    public List<ClienteResponseDTO> listar() {
+        return clienteService.listar();
+    }
 
-  @GetMapping("/{id}")
-  public ResponseEntity<Cliente> findOne(@PathVariable Long id) {
-    return repo.findById(id).map(ResponseEntity::ok)
-        .orElseGet(() -> ResponseEntity.notFound().build());
-  }
+    @GetMapping("/{id}")
+    public ResponseEntity<ClienteResponseDTO> buscarPorId(@PathVariable Long id) {
+        return ResponseEntity.ok(clienteService.buscarPorId(id));
+    }
 
-  @PostMapping
-  public ResponseEntity<Cliente> create(@Valid @RequestBody Cliente body) {
-    var saved = repo.save(body);
-    return ResponseEntity.created(URI.create("/api/clientes/" + saved.getId())).body(saved);
-  }
+    @PutMapping("/{id}")
+    public ResponseEntity<ClienteResponseDTO> actualizar(@PathVariable Long id, @Valid @RequestBody ClienteRequestDTO dto) {
+        return ResponseEntity.ok(clienteService.actualizar(id, dto));
+    }
 
-  @PutMapping("/{id}")
-  public ResponseEntity<Cliente> update(@PathVariable Long id, @Valid @RequestBody Cliente body) {
-    return repo.findById(id).map(existing -> {
-      existing.setNombre(body.getNombre());
-      existing.setTelefono(body.getTelefono());
-      existing.setNotas(body.getNotas());
-      existing.setUpdatedBy(body.getUpdatedBy());
-      return ResponseEntity.ok(repo.save(existing));
-    }).orElseGet(() -> ResponseEntity.notFound().build());
-  }
-
-  @DeleteMapping("/{id}")
-  public ResponseEntity<Void> delete(@PathVariable Long id) {
-    if (!repo.existsById(id)) return ResponseEntity.notFound().build();
-    repo.deleteById(id);
-    return ResponseEntity.noContent().build();
-  }
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> eliminar(@PathVariable Long id) {
+        clienteService.eliminar(id);
+        return ResponseEntity.noContent().build();
+    }
 }
-
