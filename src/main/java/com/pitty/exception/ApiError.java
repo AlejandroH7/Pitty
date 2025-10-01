@@ -1,16 +1,13 @@
 package com.pitty.exception;
 
-import lombok.Getter;
-
 import java.time.OffsetDateTime;
 
-@Getter
 public class ApiError {
-    private final OffsetDateTime timestamp = OffsetDateTime.now();
-    private final int status;
-    private final String error;
-    private final String message;
-    private final String path;
+    private OffsetDateTime timestamp = OffsetDateTime.now();
+    private int status;
+    private String error;
+    private String message;
+    private String path;
 
     public ApiError(int status, String error, String message, String path) {
         this.status = status;
@@ -18,4 +15,10 @@ public class ApiError {
         this.message = message;
         this.path = path;
     }
+
+    public OffsetDateTime getTimestamp() { return timestamp; }
+    public int getStatus() { return status; }
+    public String getError() { return error; }
+    public String getMessage() { return message; }
+    public String getPath() { return path; }
 }

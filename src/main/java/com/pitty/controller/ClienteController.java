@@ -1,7 +1,7 @@
 package com.pitty.controller;
 
-import com.pitty.dto.ClienteRequestDTO;
-import com.pitty.dto.ClienteResponseDTO;
+import com.pitty.dto.cliente.ClienteRequestDTO;
+import com.pitty.dto.cliente.ClienteResponseDTO;
 import com.pitty.service.ClienteService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -29,13 +29,13 @@ public class ClienteController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ClienteResponseDTO> buscarPorId(@PathVariable Long id) {
-        return ResponseEntity.ok(clienteService.buscarPorId(id));
+    public ClienteResponseDTO buscarPorId(@PathVariable Long id) {
+        return clienteService.buscarPorId(id);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ClienteResponseDTO> actualizar(@PathVariable Long id, @Valid @RequestBody ClienteRequestDTO dto) {
-        return ResponseEntity.ok(clienteService.actualizar(id, dto));
+    public ClienteResponseDTO actualizar(@PathVariable Long id, @Valid @RequestBody ClienteRequestDTO dto) {
+        return clienteService.actualizar(id, dto);
     }
 
     @DeleteMapping("/{id}")

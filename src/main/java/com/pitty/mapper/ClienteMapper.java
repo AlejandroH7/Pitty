@@ -1,8 +1,8 @@
 package com.pitty.mapper;
 
 import com.pitty.domain.Cliente;
-import com.pitty.dto.ClienteRequestDTO;
-import com.pitty.dto.ClienteResponseDTO;
+import com.pitty.dto.cliente.ClienteRequestDTO;
+import com.pitty.dto.cliente.ClienteResponseDTO;
 
 public class ClienteMapper {
 

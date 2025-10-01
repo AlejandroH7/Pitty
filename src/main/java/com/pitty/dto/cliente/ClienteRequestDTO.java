@@ -21,4 +21,3 @@ public class ClienteRequestDTO {
     public String getNotas() { return notas; }
     public void setNotas(String notas) { this.notas = notas; }
 }
-
