@@ -1,7 +1,10 @@
+// src/main/java/com/pitty/controller/PostreController.java
 package com.pitty.controller;
 
-import com.pitty.domain.Postre;
-import com.pitty.repository.PostreRepository;
+import com.pitty.dto.postre.PostreRequestDTO;
+import com.pitty.dto.postre.PostreResponseDTO;
+import com.pitty.service.PostreService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -12,22 +15,39 @@ import java.util.List;
 @RequestMapping("/api/postres")
 public class PostreController {
 
-  private final PostreRepository repo;
+    private final PostreService service;
 
-  public PostreController(PostreRepository repo) { this.repo = repo; }
+    public PostreController(PostreService service) {
+        this.service = service;
+    }
 
-  @GetMapping
-  public List<Postre> all() { return repo.findAll(); }
+    @PostMapping
+    public ResponseEntity<PostreResponseDTO> create(@Valid @RequestBody PostreRequestDTO dto) {
+        var created = service.create(dto);
+        return ResponseEntity
+                .created(URI.create("/api/postres/" + created.id()))
+                .body(created);
+    }
 
-  @GetMapping("/{id}")
-  public ResponseEntity<Postre> one(@PathVariable Long id) {
-    return repo.findById(id).map(ResponseEntity::ok)
-        .orElseGet(() -> ResponseEntity.notFound().build());
-  }
+    @GetMapping("/{id}")
+    public ResponseEntity<PostreResponseDTO> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(service.getById(id));
+    }
 
-  @PostMapping
-  public ResponseEntity<Postre> create(@RequestBody Postre body) {
-    var saved = repo.save(body);
-    return ResponseEntity.created(URI.create("/api/postres/" + saved.getId())).body(saved);
-  }
+    @GetMapping
+    public ResponseEntity<List<PostreResponseDTO>> list() {
+        return ResponseEntity.ok(service.list());
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<PostreResponseDTO> update(@PathVariable Long id,
+                                                    @Valid @RequestBody PostreRequestDTO dto) {
+        return ResponseEntity.ok(service.update(id, dto));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        service.delete(id);
+        return ResponseEntity.noContent().build();
+    }
 }

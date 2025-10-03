@@ -1,89 +1,63 @@
 package com.pitty.controller;
 
-import com.pitty.domain.*;
-import com.pitty.dto.PedidoCreateDTO;
-import com.pitty.dto.PedidoItemCreateDTO;
-import com.pitty.repository.*;
+//import java.net.URI;
+import java.time.LocalDate;
+import java.util.List;
+
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
-import java.net.URI;
-import java.util.List;
+import com.pitty.dto.PedidoCreateDTO;
+import com.pitty.dto.PedidoEstadoUpdateDTO;
+import com.pitty.dto.PedidoResponseDTO;
+import com.pitty.service.PedidoService;
+
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/pedidos")
+@RequiredArgsConstructor
 public class PedidoController {
 
-  private final PedidoRepository pedidoRepo;
-  private final PedidoItemRepository itemRepo;
-  private final ClienteRepository clienteRepo;
-  private final PostreRepository postreRepo;
+    private final PedidoService pedidoService;
 
-  public PedidoController(PedidoRepository pedidoRepo,
-                          PedidoItemRepository itemRepo,
-                          ClienteRepository clienteRepo,
-                          PostreRepository postreRepo) {
-    this.pedidoRepo = pedidoRepo;
-    this.itemRepo = itemRepo;
-    this.clienteRepo = clienteRepo;
-    this.postreRepo = postreRepo;
-  }
-
-  @GetMapping
-  public List<Pedido> findAll() {
-    return pedidoRepo.findAll();
-  }
-
-  @GetMapping("/{id}")
-  public ResponseEntity<Pedido> findOne(@PathVariable Long id) {
-    return pedidoRepo.findById(id)
-        .map(ResponseEntity::ok)
-        .orElseGet(() -> ResponseEntity.notFound().build());
-  }
-
-  @PostMapping
-  public ResponseEntity<Pedido> create(@RequestBody PedidoCreateDTO dto) {
-    var cliente = (dto.getClienteId() != null)
-        ? clienteRepo.findById(dto.getClienteId()).orElse(null) : null;
-    if (cliente == null) {
-      return ResponseEntity.badRequest().build();
+    // POST /api/pedidos
+    @PostMapping
+    public ResponseEntity<PedidoResponseDTO> create(@RequestBody PedidoCreateDTO dto) {
+        PedidoResponseDTO resp = pedidoService.crear(dto);
+        // usa 201 Created
+        return ResponseEntity.status(HttpStatus.CREATED).body(resp);
     }
 
-    var pedido = new Pedido();
-    pedido.setCliente(cliente);
-    pedido.setFechaEntrega(dto.getFechaEntrega());
-    pedido.setEstado(Pedido.Estado.BORRADOR);
-    pedido.setNotas(dto.getNotas());
-    pedido.setTotal(BigDecimal.ZERO);
-    pedido = pedidoRepo.save(pedido);
-
-    BigDecimal total = BigDecimal.ZERO;
-    if (dto.getItems() != null) {
-      for (PedidoItemCreateDTO it : dto.getItems()) {
-        var postre = (it.getPostreId() != null)
-            ? postreRepo.findById(it.getPostreId()).orElse(null) : null;
-        if (postre == null) continue;
-
-        var item = new PedidoItem();
-        item.setPedido(pedido);
-        item.setPostre(postre);
-        item.setCantidad(it.getCantidad());
-        item.setPrecioUnitario(it.getPrecioUnitario());
-        var subtotal = it.getPrecioUnitario()
-            .multiply(new BigDecimal(it.getCantidad()));
-        item.setSubtotal(subtotal);
-        item.setPersonalizaciones(it.getPersonalizaciones());
-        itemRepo.save(item);
-
-        total = total.add(subtotal);
-      }
+    // GET /api/pedidos/{id}
+    @GetMapping("/{id}")
+    public ResponseEntity<PedidoResponseDTO> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(pedidoService.obtenerPorId(id));
     }
 
-    pedido.setTotal(total);
-    pedido = pedidoRepo.save(pedido);
+    // GET /api/pedidos?q=&desde=&hasta=
+    @GetMapping
+    public ResponseEntity<List<PedidoResponseDTO>> list(
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta) {
+        return ResponseEntity.ok(pedidoService.listar(q, desde, hasta));
+    }
 
-    return ResponseEntity.created(URI.create("/api/pedidos/" + pedido.getId()))
-        .body(pedido);
-  }
+    // PUT /api/pedidos/{id}/estado
+    @PutMapping("/{id}/estado")
+    public ResponseEntity<PedidoResponseDTO> updateEstado(
+            @PathVariable Long id,
+            @RequestBody PedidoEstadoUpdateDTO dto) {
+        return ResponseEntity.ok(pedidoService.updateEstado(id, dto));
+    }
+
+    // DELETE /api/pedidos/{id}
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        pedidoService.eliminar(id);
+        return ResponseEntity.noContent().build();
+    }
 }

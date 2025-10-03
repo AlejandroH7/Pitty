@@ -1,24 +1,16 @@
+// src/main/java/com/pitty/exception/ApiError.java
 package com.pitty.exception;
 
 import java.time.OffsetDateTime;
 
-public class ApiError {
-    private OffsetDateTime timestamp = OffsetDateTime.now();
-    private int status;
-    private String error;
-    private String message;
-    private String path;
-
-    public ApiError(int status, String error, String message, String path) {
-        this.status = status;
-        this.error = error;
-        this.message = message;
-        this.path = path;
-    }
-
-    public OffsetDateTime getTimestamp() { return timestamp; }
-    public int getStatus() { return status; }
-    public String getError() { return error; }
-    public String getMessage() { return message; }
-    public String getPath() { return path; }
-}
+/**
+ * Estructura de error estándar para las respuestas.
+ * Compatible con GlobalExceptionHandler.body(...).
+ */
+public record ApiError(
+        OffsetDateTime timestamp,
+        int status,
+        String error,
+        String message,
+        String path
+) {}

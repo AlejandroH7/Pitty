@@ -1,68 +1,54 @@
 package com.pitty.controller;
 
-import com.pitty.domain.Ingrediente;
-import com.pitty.repository.IngredienteRepository;
-import jakarta.validation.Valid;
+import java.net.URI;
+import java.util.List;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.net.URI;
-import java.util.List;
+import com.pitty.dto.ingrediente.IngredienteRequestDTO;
+import com.pitty.dto.ingrediente.IngredienteResponseDTO;
+import com.pitty.service.IngredienteService;
+
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/ingredientes")
 public class IngredienteController {
 
-  private final IngredienteRepository repo;
+    private final IngredienteService service;
 
-  public IngredienteController(IngredienteRepository repo) {
-    this.repo = repo;
-  }
+    public IngredienteController(IngredienteService service) {
+        this.service = service;
+    }
 
-  // GET /api/ingredientes
-  @GetMapping
-  public List<Ingrediente> findAll() {
-    return repo.findAll();
-  }
+    @GetMapping
+    public ResponseEntity<List<IngredienteResponseDTO>> listar() {
+        return ResponseEntity.ok(service.listar());
+    }
 
-  // GET /api/ingredientes/{id}
-  @GetMapping("/{id}")
-  public ResponseEntity<Ingrediente> findOne(@PathVariable Long id) {
-    return repo.findById(id)
-        .map(ResponseEntity::ok)
-        .orElseGet(() -> ResponseEntity.notFound().build());
-  }
+    @GetMapping("/{id}")
+    public ResponseEntity<IngredienteResponseDTO> obtener(@PathVariable Long id) {
+        return ResponseEntity.ok(service.obtener(id));
+    }
 
-  // POST /api/ingredientes
-  @PostMapping
-  public ResponseEntity<Ingrediente> create(@Valid @RequestBody Ingrediente body) {
-    // createdAt/updatedAt se llenan por @PrePersist en Auditable
-    var saved = repo.save(body);
-    return ResponseEntity.created(URI.create("/api/ingredientes/" + saved.getId())).body(saved);
-  }
+    @PostMapping
+    public ResponseEntity<IngredienteResponseDTO> crear(@Valid @RequestBody IngredienteRequestDTO dto) {
+        var creado = service.crear(dto);
+        return ResponseEntity
+            .created(URI.create("/api/ingredientes/" + creado.getId()))
+            .body(creado);
+    }
 
-  // PUT /api/ingredientes/{id}
-  @PutMapping("/{id}")
-  public ResponseEntity<Ingrediente> update(@PathVariable Long id, @Valid @RequestBody Ingrediente body) {
-    return repo.findById(id)
-        .map(existing -> {
-          existing.setNombre(body.getNombre());
-          existing.setUnidad(body.getUnidad());
-          existing.setStockActual(body.getStockActual());
-          existing.setStockMinimo(body.getStockMinimo());
-          existing.setActivo(body.getActivo());
-          existing.setUpdatedBy(body.getUpdatedBy());
-          var saved = repo.save(existing);
-          return ResponseEntity.ok(saved);
-        })
-        .orElseGet(() -> ResponseEntity.notFound().build());
-  }
+    @PutMapping("/{id}")
+    public ResponseEntity<IngredienteResponseDTO> actualizar(@PathVariable Long id,
+                                                             @Valid @RequestBody IngredienteRequestDTO dto) {
+        return ResponseEntity.ok(service.actualizar(id, dto));
+    }
 
-  // DELETE /api/ingredientes/{id}
-  @DeleteMapping("/{id}")
-  public ResponseEntity<Void> delete(@PathVariable Long id) {
-    if (!repo.existsById(id)) return ResponseEntity.notFound().build();
-    repo.deleteById(id);
-    return ResponseEntity.noContent().build();
-  }
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> eliminar(@PathVariable Long id) {
+        service.eliminar(id);
+        return ResponseEntity.noContent().build();
+    }
 }
