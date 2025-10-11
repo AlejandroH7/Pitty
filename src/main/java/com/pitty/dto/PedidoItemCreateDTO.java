@@ -1,12 +1,24 @@
 package com.pitty.dto;
 
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
+
 import java.math.BigDecimal;
 import java.util.Map;
 
 public class PedidoItemCreateDTO {
+    @NotNull(message = "El postre es obligatorio")
     private Long postreId;
+
+    @NotNull(message = "La cantidad es obligatoria")
+    @Positive(message = "La cantidad debe ser mayor a cero")
     private Integer cantidad;
+
+    @NotNull(message = "El precio unitario es obligatorio")
+    @PositiveOrZero(message = "El precio unitario no puede ser negativo")
     private BigDecimal precioUnitario;
+
     private Map<String, Object> personalizaciones;
 
     public Long getPostreId() { return postreId; }

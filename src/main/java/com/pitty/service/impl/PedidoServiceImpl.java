@@ -2,6 +2,7 @@ package com.pitty.service.impl;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -21,6 +22,7 @@ import com.pitty.dto.PedidoItemCreateDTO;
 import com.pitty.dto.PedidoItemResponseDTO;
 import com.pitty.dto.PedidoResponseDTO;
 
+import com.pitty.exception.ConflictException;
 import com.pitty.exception.NotFoundException;
 
 import com.pitty.repository.ClienteRepository;
@@ -52,6 +54,14 @@ public class PedidoServiceImpl implements PedidoService {
                     .orElseThrow(() -> new NotFoundException("Cliente id=" + dto.getClienteId() + " no existe"));
         }
 
+        if (dto.getItems() == null || dto.getItems().isEmpty()) {
+            throw new ConflictException("El pedido debe contener al menos un ítem");
+        }
+
+        if (dto.getFechaEntrega() != null && dto.getFechaEntrega().isBefore(OffsetDateTime.now())) {
+            throw new ConflictException("La fecha de entrega no puede estar en el pasado");
+        }
+
         Pedido pedido = new Pedido();
         pedido.setCliente(cliente);
         pedido.setFechaEntrega(dto.getFechaEntrega());
@@ -61,33 +71,31 @@ public class PedidoServiceImpl implements PedidoService {
         pedido = pedidoRepo.save(pedido);
 
         BigDecimal total = BigDecimal.ZERO;
+        pedido.getItems().clear();
 
-        if (dto.getItems() != null) {
-            for (PedidoItemCreateDTO it : dto.getItems()) {
+        for (PedidoItemCreateDTO it : dto.getItems()) {
+            Postre postre = postreRepo.findById(it.getPostreId())
+                    .orElseThrow(() -> new NotFoundException("Postre id=" + it.getPostreId() + " no existe"));
 
-                Postre postre = null;
-                if (it.getPostreId() != null) {
-                    postre = postreRepo.findById(it.getPostreId())
-                            .orElseThrow(() -> new NotFoundException("Postre id=" + it.getPostreId() + " no existe"));
-                }
+            PedidoItem item = new PedidoItem();
+            item.setPedido(pedido);
+            item.setPostre(postre);
+            item.setCantidad(it.getCantidad());
+            item.setPrecioUnitario(it.getPrecioUnitario());
 
-                PedidoItem item = new PedidoItem();
-                item.setPedido(pedido);
-                item.setPostre(postre);
-                item.setCantidad(it.getCantidad());
-                item.setPrecioUnitario(it.getPrecioUnitario());
+            BigDecimal subtotal = it.getPrecioUnitario()
+                    .multiply(BigDecimal.valueOf(it.getCantidad()));
+            item.setSubtotal(subtotal);
 
-                BigDecimal subtotal = it.getPrecioUnitario()
-                        .multiply(new BigDecimal(it.getCantidad() == null ? 0 : it.getCantidad()));
-                item.setSubtotal(subtotal);
-
-                // Guarda el Map<String,Object> tal cual en la entidad (columna jsonb)
+            if (it.getPersonalizaciones() != null) {
                 item.setPersonalizaciones(objectMapper.valueToTree(it.getPersonalizaciones()));
-
-
-                itemRepo.save(item);
-                total = total.add(subtotal);
+            } else {
+                item.setPersonalizaciones(null);
             }
+
+            item = itemRepo.save(item);
+            pedido.getItems().add(item);
+            total = total.add(subtotal);
         }
 
         pedido.setTotal(total);
@@ -117,11 +125,17 @@ public class PedidoServiceImpl implements PedidoService {
         Pedido pedido = pedidoRepo.findById(id)
                 .orElseThrow(() -> new NotFoundException("Pedido id=" + id + " no existe"));
         if (dto.getEstado() != null) {
+            Pedido.Estado nuevoEstado;
             try {
-                pedido.setEstado(Pedido.Estado.valueOf(dto.getEstado()));
+                nuevoEstado = Pedido.Estado.valueOf(dto.getEstado());
             } catch (IllegalArgumentException ex) {
-                throw new NotFoundException("Estado inválido: " + dto.getEstado());
+                throw new ConflictException("Estado inválido: " + dto.getEstado());
             }
+
+            if (pedido.getEstado() == Pedido.Estado.ENTREGADO && nuevoEstado != Pedido.Estado.ENTREGADO) {
+                throw new ConflictException("No se puede modificar un pedido entregado");
+            }
+            pedido.setEstado(nuevoEstado);
         }
         pedido = pedidoRepo.save(pedido);
         return toResponse(pedido);

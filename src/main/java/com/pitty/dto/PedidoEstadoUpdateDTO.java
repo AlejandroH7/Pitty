@@ -1,8 +1,10 @@
 package com.pitty.dto;
 
+import jakarta.validation.constraints.NotBlank;
+
 public class PedidoEstadoUpdateDTO {
-    // valores esperados: BORRADOR, CONFIRMADO, ENTREGADO, CANCELADO (o los que tengas)
-    private String estado;
+    @NotBlank(message = "El estado es obligatorio")
+    private String estado; // BORRADOR, CONFIRMADO, ENTREGADO, CANCELADO
 
     public String getEstado() { return estado; }
     public void setEstado(String estado) { this.estado = estado; }

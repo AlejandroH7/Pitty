@@ -30,6 +30,7 @@ public class ClienteServiceImpl implements ClienteService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<ClienteResponseDTO> listar() {
         return clienteRepository.findAll()
                 .stream()
@@ -38,6 +39,7 @@ public class ClienteServiceImpl implements ClienteService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public ClienteResponseDTO buscarPorId(Long id) {
         Cliente c = clienteRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Cliente no encontrado: id=" + id));

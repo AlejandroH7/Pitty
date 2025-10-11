@@ -24,6 +24,7 @@ public class IngredienteServiceImpl implements IngredienteService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<IngredienteResponseDTO> listar() {
         return repo.findAll().stream()
             .map(IngredienteMapper::toResponse)
@@ -31,6 +32,7 @@ public class IngredienteServiceImpl implements IngredienteService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public IngredienteResponseDTO obtener(Long id) {
         var ing = repo.findById(id)
             .orElseThrow(() -> new NotFoundException("Ingrediente no encontrado"));

@@ -1,11 +1,11 @@
 package com.pitty.controller;
 
-//import java.net.URI;
+import java.net.URI;
 import java.time.LocalDate;
 import java.util.List;
 
+import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,10 +25,11 @@ public class PedidoController {
 
     // POST /api/pedidos
     @PostMapping
-    public ResponseEntity<PedidoResponseDTO> create(@RequestBody PedidoCreateDTO dto) {
+    public ResponseEntity<PedidoResponseDTO> create(@Valid @RequestBody PedidoCreateDTO dto) {
         PedidoResponseDTO resp = pedidoService.crear(dto);
-        // usa 201 Created
-        return ResponseEntity.status(HttpStatus.CREATED).body(resp);
+        return ResponseEntity
+                .created(URI.create("/api/pedidos/" + resp.getId()))
+                .body(resp);
     }
 
     // GET /api/pedidos/{id}
@@ -50,7 +51,7 @@ public class PedidoController {
     @PutMapping("/{id}/estado")
     public ResponseEntity<PedidoResponseDTO> updateEstado(
             @PathVariable Long id,
-            @RequestBody PedidoEstadoUpdateDTO dto) {
+            @Valid @RequestBody PedidoEstadoUpdateDTO dto) {
         return ResponseEntity.ok(pedidoService.updateEstado(id, dto));
     }
 

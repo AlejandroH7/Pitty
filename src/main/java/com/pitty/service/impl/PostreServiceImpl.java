@@ -36,6 +36,7 @@ public class PostreServiceImpl implements PostreService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public PostreResponseDTO getById(Long id) {
         var entity = repository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Postre " + id + " no encontrado"));
@@ -43,6 +44,7 @@ public class PostreServiceImpl implements PostreService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<PostreResponseDTO> list() {
         return repository.findAll()
                 .stream()

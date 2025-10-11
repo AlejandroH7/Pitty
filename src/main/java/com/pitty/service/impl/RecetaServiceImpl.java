@@ -10,8 +10,8 @@ import com.pitty.repository.IngredienteRepository;
 import com.pitty.repository.PostreRepository;
 import com.pitty.repository.RecetaDetalleRepository;
 import com.pitty.service.RecetaService;
-import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -32,6 +32,7 @@ public class RecetaServiceImpl implements RecetaService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public RecetaResponseDTO getByPostre(Long postreId) {
         var postre = postreRepo.findById(postreId)
                 .orElseThrow(() -> new NotFoundException("Postre id=" + postreId + " no encontrado"));
