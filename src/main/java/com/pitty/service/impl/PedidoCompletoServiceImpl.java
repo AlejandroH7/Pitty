@@ -43,6 +43,11 @@ public class PedidoCompletoServiceImpl implements PedidoCompletoService {
         Postre postre = postreRepository.findById(dto.getPostreId())
                 .orElseThrow(() -> new NotFoundException("Postre no encontrado con ID: " + dto.getPostreId()));
 
+        // DEBUG: Print values before stock validation
+        System.out.println("DEBUG: Postre ID: " + postre.getId() + ", Nombre: " + postre.getNombre());
+        System.out.println("DEBUG: Porciones disponibles: " + postre.getPorciones());
+        System.out.println("DEBUG: Cantidad solicitada: " + dto.getCantidad());
+
         // 1. Validar stock
         if (postre.getPorciones() < dto.getCantidad()) {
             throw new ConflictException("No hay suficientes porciones disponibles para el postre: " + postre.getNombre() + ". Disponibles: " + postre.getPorciones());
