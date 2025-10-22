@@ -1,19 +1,20 @@
 package com.pitty.service;
 
-import com.pitty.dto.evento.EventoRequestDTO;
+import com.pitty.dto.evento.EventoCreateDTO;
 import com.pitty.dto.evento.EventoResponseDTO;
-
-import java.util.List;
+import com.pitty.dto.evento.EventoUpdateDTO;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface EventoService {
 
-    EventoResponseDTO crear(EventoRequestDTO dto);
+    EventoResponseDTO create(EventoCreateDTO dto);
 
-    EventoResponseDTO obtener(Long id);
+    EventoResponseDTO getById(Long id);
 
-    List<EventoResponseDTO> listar();
+    Page<EventoResponseDTO> list(Pageable pageable);
 
-    EventoResponseDTO actualizar(Long id, EventoRequestDTO dto);
+    EventoResponseDTO update(Long id, EventoUpdateDTO dto);
 
-    void eliminar(Long id);
+    void delete(Long id);
 }

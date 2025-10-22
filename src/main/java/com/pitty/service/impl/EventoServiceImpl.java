@@ -1,83 +1,71 @@
 package com.pitty.service.impl;
 
 import com.pitty.domain.Evento;
-import com.pitty.domain.Pedido;
-import com.pitty.dto.evento.EventoRequestDTO;
+import com.pitty.dto.evento.EventoCreateDTO;
 import com.pitty.dto.evento.EventoResponseDTO;
-import com.pitty.exception.ConflictException;
+import com.pitty.dto.evento.EventoUpdateDTO;
 import com.pitty.exception.NotFoundException;
 import com.pitty.mapper.EventoMapper;
 import com.pitty.repository.EventoRepository;
-import com.pitty.repository.PedidoRepository;
 import com.pitty.service.EventoService;
-import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import java.time.OffsetDateTime;
 
 @Service
-@RequiredArgsConstructor
 public class EventoServiceImpl implements EventoService {
 
     private final EventoRepository eventoRepository;
-    private final PedidoRepository pedidoRepository;
+    private final EventoMapper eventoMapper;
+
+    public EventoServiceImpl(EventoRepository eventoRepository, EventoMapper eventoMapper) {
+        this.eventoRepository = eventoRepository;
+        this.eventoMapper = eventoMapper;
+    }
 
     @Override
     @Transactional
-    public EventoResponseDTO crear(EventoRequestDTO dto) {
-        Pedido pedido = resolvePedido(dto.pedidoId());
-        Evento entity = EventoMapper.toEntity(dto, pedido);
-        Evento saved = eventoRepository.save(entity);
-        return EventoMapper.toResponse(saved);
+    public EventoResponseDTO create(EventoCreateDTO dto) {
+        Evento evento = eventoMapper.toEntity(dto);
+        evento.setCreatedAt(OffsetDateTime.now());
+        evento.setUpdatedAt(OffsetDateTime.now()); // Set updatedAt on creation
+        Evento savedEvento = eventoRepository.save(evento);
+        return eventoMapper.toResponse(savedEvento);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public EventoResponseDTO obtener(Long id) {
-        Evento entity = eventoRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Evento no encontrado: id=" + id));
-        return EventoMapper.toResponse(entity);
+    public EventoResponseDTO getById(Long id) {
+        Evento evento = eventoRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Evento no encontrado con ID: " + id));
+        return eventoMapper.toResponse(evento);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<EventoResponseDTO> listar() {
-        return eventoRepository.findAll()
-                .stream()
-                .map(EventoMapper::toResponse)
-                .toList();
+    public Page<EventoResponseDTO> list(Pageable pageable) {
+        return eventoRepository.findAll(pageable).map(eventoMapper::toResponse);
     }
 
     @Override
     @Transactional
-    public EventoResponseDTO actualizar(Long id, EventoRequestDTO dto) {
-        Evento entity = eventoRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Evento no encontrado: id=" + id));
-        Pedido pedido = resolvePedido(dto.pedidoId());
-        EventoMapper.copy(dto, entity, pedido);
-        Evento updated = eventoRepository.save(entity);
-        return EventoMapper.toResponse(updated);
+    public EventoResponseDTO update(Long id, EventoUpdateDTO dto) {
+        Evento evento = eventoRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Evento no encontrado con ID: " + id));
+        eventoMapper.applyUpdate(evento, dto);
+        Evento updatedEvento = eventoRepository.save(evento);
+        return eventoMapper.toResponse(updatedEvento);
     }
 
     @Override
     @Transactional
-    public void eliminar(Long id) {
+    public void delete(Long id) {
         if (!eventoRepository.existsById(id)) {
-            throw new NotFoundException("Evento no encontrado: id=" + id);
+            throw new NotFoundException("Evento no encontrado con ID: " + id);
         }
         eventoRepository.deleteById(id);
-    }
-
-    private Pedido resolvePedido(Long pedidoId) {
-        if (pedidoId == null) {
-            return null;
-        }
-        Pedido pedido = pedidoRepository.findById(pedidoId)
-                .orElseThrow(() -> new NotFoundException("Pedido no encontrado: id=" + pedidoId));
-        if (pedido.getEstado() == Pedido.Estado.CANCELADO) {
-            throw new ConflictException("No se puede asociar un evento a un pedido cancelado");
-        }
-        return pedido;
     }
 }

@@ -1,25 +1,36 @@
 package com.pitty.dto.evento;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import java.time.OffsetDateTime;
 
-public class EventoResponseDTO {
+public class EventoUpdateDTO {
 
-    private Long id;
+    @NotBlank(message = "El título del evento no puede estar vacío")
+    @Size(max = 255, message = "El título no puede exceder los 255 caracteres")
     private String titulo;
+
+    @NotBlank(message = "El nombre del evento no puede estar vacío")
+    @Size(max = 255, message = "El nombre no puede exceder los 255 caracteres")
     private String nombre;
+
+    @NotNull(message = "La fecha del evento no puede ser nula")
     private OffsetDateTime fecha;
+
+    @Size(max = 1000, message = "La descripción no puede exceder los 1000 caracteres")
     private String descripcion;
+
+    @Size(max = 255, message = "La ubicación no puede exceder los 255 caracteres")
     private String ubicacion;
-    private OffsetDateTime createdAt;
-    private OffsetDateTime updatedAt;
 
     // Getters y Setters
-    public Long getId() {
-        return id;
+    public String getNombre() {
+        return nombre;
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public void setNombre(String nombre) {
+        this.nombre = nombre;
     }
 
     public String getTitulo() {
@@ -28,14 +39,6 @@ public class EventoResponseDTO {
 
     public void setTitulo(String titulo) {
         this.titulo = titulo;
-    }
-
-    public String getNombre() {
-        return nombre;
-    }
-
-    public void setNombre(String nombre) {
-        this.nombre = nombre;
     }
 
     public OffsetDateTime getFecha() {
@@ -60,21 +63,5 @@ public class EventoResponseDTO {
 
     public void setUbicacion(String ubicacion) {
         this.ubicacion = ubicacion;
-    }
-
-    public OffsetDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(OffsetDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public OffsetDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(OffsetDateTime updatedAt) {
-        this.updatedAt = updatedAt;
     }
 }
