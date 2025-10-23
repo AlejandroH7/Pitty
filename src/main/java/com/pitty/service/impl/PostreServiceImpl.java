@@ -7,8 +7,10 @@ import com.pitty.dto.postre.PostreResponseDTO;
 import com.pitty.exception.ConflictException;
 import com.pitty.exception.NotFoundException;
 import com.pitty.mapper.PostreMapper;
+import com.pitty.repository.PedidoCompletoRepository;
 import com.pitty.repository.PostreRepository;
 import com.pitty.service.PostreService;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,9 +20,11 @@ import java.util.List;
 public class PostreServiceImpl implements PostreService {
 
     private final PostreRepository repository;
+    private final PedidoCompletoRepository pedidoCompletoRepository;
 
-    public PostreServiceImpl(PostreRepository repository) {
+    public PostreServiceImpl(PostreRepository repository, PedidoCompletoRepository pedidoCompletoRepository) {
         this.repository = repository;
+        this.pedidoCompletoRepository = pedidoCompletoRepository;
     }
 
     @Transactional
@@ -73,6 +77,12 @@ public class PostreServiceImpl implements PostreService {
     public void delete(Long id) {
         var entity = repository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Postre " + id + " no encontrado"));
+
+        // Verificar si el postre tiene pedidos asociados
+        if (pedidoCompletoRepository.findByPostreId(id, Pageable.unpaged()).hasContent()) {
+            throw new ConflictException("No se puede eliminar el postre porque tiene pedidos asociados.");
+        }
+
         repository.delete(entity);
         // Si hay FK (pedido_item) tu handler devolverá 409 automáticamente.
     }
