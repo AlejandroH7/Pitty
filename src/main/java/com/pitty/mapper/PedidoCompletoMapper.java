@@ -30,7 +30,6 @@ public class PedidoCompletoMapper {
         entity.setTotal(dto.getTotal());
         entity.setFechaEntrega(dto.getFechaEntrega());
     }
-
     public PedidoCompletoResponseDTO toResponse(PedidoCompleto entity) {
         PedidoCompletoResponseDTO dto = new PedidoCompletoResponseDTO();
         dto.setId(entity.getId());
